@@ -16,6 +16,11 @@ if __name__ == "__main__":
         if s.local_rank == 1:
             tensor += 2
         allr = collective._allreduce(tensor)
+        # Since the following collective operators act in communication stream
+        # asynchronously by default, we have to force them in calculation stream
+        # (use_calc_stream=True) to keep data synchronous, or call sync_comm_stream
+        # operator explicitly to synchronize data. However, sync_comm_stream has no
+        # computing kernel that makes it failed in dygraph.
         callr = collective._c_allreduce(tensor, use_calc_stream=True)
         callg = collective._c_allgather(tensor, s.nranks, use_calc_stream=True)
         creds = collective._c_reducescatter(callg, s.nranks, use_calc_stream=True)
