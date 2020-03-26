@@ -49,4 +49,5 @@ if role.worker_index() == 1:
     print ""
 
 print 'rank:', role.worker_index()
-print v1, v2
+print 'allgather:', v1
+print 'allreduce:', v2
