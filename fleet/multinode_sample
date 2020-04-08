@@ -1,0 +1,22 @@
+# on node 192.168.0.2
+current_node_ip=192.168.0.2
+cluster_node_ips=192.168.0.2,192.168.0.3
+
+CUDA_VISIBLE_DEVICES=0,1 \
+  python -m paddle.distributed.launch \
+  --selected_gpus=0,1 \
+  --cluster_node_ips=$cluster_node_ips \
+  --node_ip=$current_node_ip \
+  fleet_api.py
+  
+  
+# on node 192.168.0.3
+current_node_ip=192.168.0.3
+cluster_node_ips=192.168.0.2,192.168.0.3
+
+CUDA_VISIBLE_DEVICES=0,1 \
+  python -m paddle.distributed.launch \
+  --selected_gpus=0,1 \
+  --cluster_node_ips=$cluster_node_ips \
+  --node_ip=$current_node_ip \
+  fleet_api.py
