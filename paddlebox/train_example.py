@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from __future__ import print_function
 import numpy as np
 import paddle.fluid as fluid
@@ -20,12 +21,9 @@ with fluid.program_guard(main_program, start_program):
     sgd_optimizer = fluid.optimizer.SGD(learning_rate=0.01)
     sgd_optimizer.minimize(avg_cost)
 
-# 打印网络结构
-with open('main_program', 'w') as fout:
-    print(main_program, file=fout)
-
 # 执行器声明
 exe = fluid.Executor(fluid.CPUPlace())
+# 执行初始化
 exe.run(start_program)
 
 # 定义输入
@@ -38,4 +36,4 @@ feed_list = {
 fetch_list = [avg_cost]
 # 执行训练，指定输入，获取输出
 result = exe.run(main_program, feed=feed_list, fetch_list=fetch_list)
-print('avg_cost:', result)
+print('avg_cost:', result) #avg_cost: [array([0.61414886], dtype=float32)]

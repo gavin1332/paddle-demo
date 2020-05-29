@@ -1,7 +1,8 @@
 from __future__ import print_function
 import paddle.fluid as fluid
 import paddle.fluid.layers as layers
-from paddle.fluid.transpiler.details.program_utils import program_to_code
+if 'program_to_code' in dir(fluid.transpiler.details.program_utils):
+  from paddle.fluid.transpiler.details.program_utils import program_to_code
 
 main_program = fluid.Program()
 start_program = fluid.Program()
@@ -18,9 +19,10 @@ with fluid.program_guard(main_program, start_program):
 with open('main_program.1', 'w') as fout:
     print(main_program, file=fout)
 
-# Method 2: Print compact structural program description
-with open('main_program.2', 'w') as fout:
-    program_to_code(main_program, fout=fout)
+if 'program_to_code' in locals():
+  # Method 2: Print compact structural program description
+  with open('main_program.2', 'w') as fout:
+      program_to_code(main_program, fout=fout)
 
 # Method 3: Print binary program data with a specified filename for visualization
 with open('__model__', "wb") as fout:

@@ -11,4 +11,4 @@ exe = fluid.Executor(fluid.CPUPlace())
 x = np.array([5]).astype("float32")
 y = np.array([7]).astype("float32")
 outs = exe.run(fluid.default_main_program(), feed={'a':x,'b':y}, fetch_list=[result])
-print(outs)
+print(outs) #[array([12.], dtype=float32)]
