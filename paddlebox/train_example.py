@@ -21,6 +21,10 @@ with fluid.program_guard(main_program, start_program):
     sgd_optimizer = fluid.optimizer.SGD(learning_rate=0.01)
     sgd_optimizer.minimize(avg_cost)
 
+# 打印网络
+with open('main.program', 'w') as fout:
+    print(main_program, file=fout)
+
 # 执行器声明
 exe = fluid.Executor(fluid.CPUPlace())
 # 执行初始化
