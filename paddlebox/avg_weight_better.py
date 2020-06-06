@@ -15,7 +15,6 @@ def _is_backward_op(op, op_role_key):
 main_program = fluid.Program()
 start_program = fluid.Program()
 
-
 avg_list = []
 with fluid.program_guard(main_program, start_program):
     # 组网
@@ -32,14 +31,6 @@ with fluid.program_guard(main_program, start_program):
     sgd_optimizer = fluid.optimizer.SGD(learning_rate=0.01)
     sgd_optimizer.minimize(avg_cost)
                 
-                
-    hehe = layers.create_global_var(
-        shape = main_program.global_block().vars["fc_0.w_0"].shape,
-        value =1.0,
-        dtype ='float32',
-        persistable =True,
-        name ='hehe')
-                    
     decay_var = layers.fill_constant(shape=[1], value=0.9, dtype='float32')
     rev_decay_var = layers.fill_constant(shape=[1], value=0.1, dtype='float32')
 
@@ -58,7 +49,6 @@ with fluid.program_guard(main_program, start_program):
             for i in range(0, len(op_role_var), 2):
                 param = block.vars[op_role_var[i]]
     
-                # startup program
                 avg_var = layers.create_global_var(
                     shape = param.shape,
                     value = 1.0,
@@ -88,12 +78,11 @@ feed_list = {
 fetch_list = [avg_cost]
 # 执行训练（模拟10个minibatch），指定输入，获取输出
 for i in range(10):
-
     # copy weight to avg_weight
+    # 只是个例子，把下面的exe.run看成train_from_dataset即可
     for e in avg_list:
         param_name = e.name.split('@')[0]
         print("copy param: %s" % (param_name))
-
         dst_tensor = fluid.global_scope().find_var(e.name).get_tensor()
         dst_tensor.set(fluid.global_scope().find_var(param_name).get_tensor(), fluid.CPUPlace())
 
