@@ -18,8 +18,9 @@ limitations under the License. */
 #include "helper.h"
 #include "paddle/include/paddle_inference_api.h"
 
-DEFINE_string(model_path, "../model", "Directory of the inference model.");
-DEFINE_string(data_path, "../data/sample.data", "Path of the dataset.");
+DEFINE_string(model_path, "model", "Directory of the inference model.");
+DEFINE_string(data_path, "data/sample.data", "Path of the dataset.");
+DEFINE_string(fetch_var, "", "Variable name to fetch.");
 
 DEFINE_int32(start_line, 0, "The starting line of the text file read (this line will be read).");
 DEFINE_int32(end_line, 1000000, "The ending line of the text file read (this line will be read).");
@@ -33,9 +34,9 @@ namespace paddle {
 
 void set_config(AnalysisConfig* config, bool optimize) {
   config->SwitchUseFeedFetchOps(false);
-  //config->SwitchIrOptim(true);
-  if (!optimize) {
-    config->pass_builder()->DeletePass("seqpool_cvm_concat_fuse_pass");
+  // If fetch var is set, do not optimize IR to skip variable fusion
+  if (FLAGS_fetch_var.empty()) {
+    config->SwitchIrOptim(true);
   }
   config->DisableGpu();
   config->EnableMKLDNN();
@@ -57,19 +58,27 @@ double run(paddle::PaddlePredictor* predictor, bool need_profile) {
   }
 };
 
-void fetch_internal_data(paddle::PaddlePredictor* predictor, const std::string& var_name) {
-  auto out = predictor->GetOutputTensor(var_name);
-  const std::vector<int>& output_shape = out->shape();
-  int size = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int>());
-  float out_data[size];
-  // if data is on GPU
-  out->copy_to_cpu(out_data);
-  LOG(INFO) << "fetch data size: " << size;
-  std::stringstream ss;
-  for (int i = 0; i < size; ++i) {
-    ss << out_data[i] << " ";
+void fetch_internal_data(paddle::PaddlePredictor* predictor, const std::string& var_list) {
+  std::vector<std::string> var_names;
+  inference::split(var_list, ',', &var_names);
+  for (auto& var_name : var_names) {
+    try {
+      auto out = predictor->GetOutputTensor(var_name);
+      const std::vector<int>& output_shape = out->shape();
+      int size = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int>());
+      float out_data[size];
+      // if data is on GPU
+      out->copy_to_cpu(out_data);
+      std::stringstream ss;
+      for (int i = 0; i < size; ++i) {
+        ss << out_data[i] << " ";
+      }
+      LOG(INFO) << "Fetched variable \"" << var_name << "\" of size " << size << ":\n" << ss.str();
+    } catch (...) {
+      LOG(ERROR) << "Failed to fetch variable \"" << var_name << "\"";
+      continue;
+    }
   }
-  LOG(INFO) << "fetch data: " << ss.str();
 }
 
 std::unordered_map<std::string, std::vector<float>>
@@ -109,9 +118,6 @@ predict(bool optimize, bool profile) {
   double time = run(predictor.get(), profile);
   LOG(INFO) << "[predict] iter = " << FLAGS_iter << ", time = " << time << " ms.";
 
-  // example of fetching internal data after prediction
-  fetch_internal_data(predictor.get(), "fc_0.tmp_2");
-
   // 6. Insert the tensor pointer to the map.
   std::unordered_map<std::string, std::vector<float>> output_tensors;
   const std::vector<std::string>& out_names = predictor->GetOutputNames();
@@ -123,6 +129,11 @@ predict(bool optimize, bool profile) {
     for (size_t i = 0; i < vec.size(); i++) {
       LOG(INFO) << out_names[i] << ": " << vec[i];
     }
+  }
+
+  // 8. Fetch internal data if needed
+  if (!FLAGS_fetch_var.empty()) {
+    fetch_internal_data(predictor.get(), FLAGS_fetch_var);
   }
 
   return output_tensors;
