@@ -41,6 +41,8 @@ slot_name_m\tfm1 fm2 ... fmn
 ```
 The slot name and the feature section is separated by a tab and all dense features are separated by space.
 
+NOTICE: `slot_name_xxx` should be consistant to slots configured in `slot.txt`
+
 Step5. Run the demo application and a fetch list separated by comma could be set
 ```shell
 sh run_demo.sh fetch_var1,fetch_var2,...
