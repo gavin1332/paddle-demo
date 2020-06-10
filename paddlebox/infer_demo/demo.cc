@@ -83,7 +83,7 @@ predict(bool optimize, bool profile) {
   // 2. Configure and init the predictor.
   AnalysisConfig config;
   set_config(&config, optimize);
-  config.SetModel(FLAGS_model_path + "/model.bin", FLAGS_model_path + "/params.bin");
+  config.SetModel(FLAGS_model_path + "/program.bin", FLAGS_model_path + "/model.bin");
   auto predictor = CreatePaddlePredictor(config);
   LOG(INFO) << "finish loading model";
 

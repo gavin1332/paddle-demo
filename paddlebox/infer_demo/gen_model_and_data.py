@@ -43,8 +43,8 @@ if __name__ == '__main__':
     infer_program = train_program.clone()
     fluid.io.save_inference_model(dirname=save_dir,
                                   main_program=infer_program,
-                                  model_filename='model.bin',
-                                  params_filename='params.bin',
+                                  model_filename='program.bin',
+                                  params_filename='model.bin',
                                   feeded_var_names=slots,
                                   target_vars=sigmoid,
                                   executor=exe)
