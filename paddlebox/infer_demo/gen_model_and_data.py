@@ -3,16 +3,16 @@ import os
 import paddle.fluid as fluid
 import paddle.fluid.layers as layers
 import random
+import string
 
 num_slots = 20
 emb_size = 11
 
-slots = []
-with open('slot.txt', 'w') as fout:
-    for i in range(num_slots):
-        slot_name = 'slot_' + str(i)
-        print(slot_name, file=fout)
-        slots.append(slot_name)
+def rand_name(length=4):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(length))
+
+slots = [rand_name() + '_' + str(i) for i in range(num_slots)]
 
 data_dir = 'data'
 if not os.path.isdir(data_dir):
