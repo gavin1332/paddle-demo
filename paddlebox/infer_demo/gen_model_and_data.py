@@ -38,6 +38,15 @@ with fluid.program_guard(train_program, start_program):
     #print(fc2.name) # fc_1.tmp_1
     sigmoid = layers.sigmoid(fc2)
 
+print('\nall variables:')
+for var in train_program.current_block().vars:
+    print(var)
+
+print('\nall parameters:')
+for param in train_program.current_block().all_parameters():
+    print(param.name)
+
+
 if __name__ == '__main__':
     exe = fluid.Executor(fluid.CPUPlace())
     exe.run(start_program)
