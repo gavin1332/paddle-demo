@@ -1,2 +1,2 @@
-rm -rf build data fluid_inference model
+rm -rf build data model
 rm -f demo log.log slot.txt

@@ -124,11 +124,15 @@ predict(bool optimize, bool profile) {
   helper::fill_output_tensors_by_names(predictor.get(), &output_tensors, out_names);
 
   // 7. Print the value of output tensors.
+  std::stringstream ss;
   for (auto& it: output_tensors) {
+    ss.str("");
     const auto& vec = it.second;
-    for (size_t i = 0; i < vec.size(); i++) {
-      LOG(INFO) << out_names[i] << ": " << vec[i];
+    ss << it.first << ": " << vec[0];
+    for (size_t i = 1; i < vec.size(); i++) {
+      ss << "," << vec[i];
     }
+    LOG(INFO) << ss.str();
   }
 
   // 8. Fetch internal data if needed
