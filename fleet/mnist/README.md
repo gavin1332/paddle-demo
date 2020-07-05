@@ -1,5 +1,5 @@
 # 简介
-本示例展现如何使用Fleet API实现Paddle分布式训练。
+本示例基于MNIST数据集，展现如何使用Fleet API实现Paddle分布式训练。
 
 # 文件结构
 
