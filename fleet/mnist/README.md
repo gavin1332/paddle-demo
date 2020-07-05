@@ -10,7 +10,7 @@
 * train.py: 组建训练和评估流程的主函数
 * dist_run.sh: 用于便捷启动分布式训练的脚本
 
-其中，我们在`train.py`文件中通过`args.distributed`配置项清晰地呈现了单机单卡代码如何便捷地使用Fleet API加入分布式训练能力。
+其中，`train.py`文件中通过`args.distributed`配置项清晰地呈现了单机单卡代码如何便捷地使用Fleet API合入分布式训练能力。并且，仅有主函数会使用`args.distributed`配置项，从而单卡训练配置和多卡分布式训练配置的关键区别能够更加清晰地展现，便于读者快速借鉴。
 
 # 执行方法
 
