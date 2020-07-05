@@ -27,3 +27,7 @@ sh dist_run.sh
 ## 多机多卡
 
 待补充
+
+## 基于PaddleCloud执行多机多卡
+
+待补充
