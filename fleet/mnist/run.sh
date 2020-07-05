@@ -8,4 +8,4 @@ export FLAGS_cudnn_batchnorm_spatial_persistent=1
 python -m paddle.distributed.launch \
     --selected_gpus=0,1 \
     --log_dir=mylog \
-    train.py
+    train.py --distributed

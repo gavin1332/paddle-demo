@@ -4,7 +4,7 @@ from paddle.fluid.incubate.fleet.collective import fleet
 
 BATCH_SIZE = 16
 
-def create_dataloader(generator, feed, is_test):
+def create_dataloader(generator, feed, place, is_test, is_distributed):
     def _dist_wrapper(generator):
         def _wrapper():
             rank = fleet.worker_index()
@@ -14,12 +14,13 @@ def create_dataloader(generator, feed, is_test):
                     yield sample
         return _wrapper
 
-    generator = _dist_wrapper(generator)
+    if is_distributed:
+        generator = _dist_wrapper(generator)
+
     drop_last = False if is_test else True
     loader = fluid.io.DataLoader.from_generator(feed_list=feed, capacity=16)
     loader.set_sample_generator(generator, batch_size=BATCH_SIZE,
-            drop_last=drop_last, places=fluid.cuda_places())
-
+            drop_last=drop_last, places=[place])
     return loader
 
 
@@ -38,3 +39,4 @@ def sample_batch(sample):
     tensor = list(sample[0].values())[0]
     assert(isinstance(tensor, fluid.LoDTensor))
     return tensor.shape()[0]
+

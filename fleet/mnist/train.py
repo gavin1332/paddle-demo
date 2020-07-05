@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os
 import numpy as np
+import argparse
 
 import paddle
 import paddle.fluid as fluid
@@ -11,66 +12,101 @@ import model
 import utils
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--distributed', action='store_true', default=False)
+args = parser.parse_args()
+print(args)
+
+
 def init_dist_env():
     role = role_maker.PaddleCloudRoleMaker(is_collective=True)
     fleet.init(role)
 
 
-def distributed_optimize(loss):
+def create_place(is_distributed):
+    place_idx = int(os.environ['FLAGS_selected_gpus']) if is_distributed else 0
+    return fluid.CUDAPlace(place_idx)
+
+
+def distributed_optimize(optimizer):
     strategy = DistributedStrategy()
     strategy.fuse_all_reduce_ops = True
     strategy.nccl_comm_num = 2 
     strategy.fuse_elewise_add_act_ops=True
     strategy.fuse_bn_act_ops = True
-
-    optimizer = fluid.optimizer.SGD(learning_rate=1e-3)
-    optimizer = fleet.distributed_optimizer(optimizer, strategy=strategy)
-    optimizer.minimize(loss, fluid.default_startup_program())
+    return fleet.distributed_optimizer(optimizer, strategy=strategy)
 
 
-def create_executor():
-    place = fluid.CUDAPlace(int(os.environ['FLAGS_selected_gpus']))
+def create_executor(place):
     exe = fluid.Executor(place)
     return exe
 
 
-def train(train_prog, start_prog, exe, feed, fetch):
-    train_prog = fleet.main_program
-    train_loader = utils.create_dataloader(paddle.dataset.mnist.train(), feed, False)
+def create_optimizer(is_distributed):
+    optimizer = fluid.optimizer.SGD(learning_rate=1e-3)
+    if is_distributed:
+        optimizer = distributed_optimize(optimizer)    
+    return optimizer
+
+
+def create_train_dataloader(feed, place, is_distributed):
+    generator = paddle.dataset.mnist.train()
+    return utils.create_dataloader(generator, feed, place,
+            is_test=False, is_distributed=is_distributed)
+
+
+def create_test_dataloader(feed, place, is_distributed):
+    generator = paddle.dataset.mnist.test()
+    return utils.create_dataloader(generator, feed, place,
+            is_test=True, is_distributed=is_distributed)
+
+
+def train(train_prog, start_prog, exe, feed, fetch, loader):
     exe.run(start_prog)
-    for idx, sample in enumerate(train_loader()):
+    for idx, sample in enumerate(loader()):
         ret = exe.run(train_prog, feed=sample, fetch_list=fetch)
         if idx % 100 == 0:
             print('[TRAIN] step=%d loss=%f' % (idx, ret[0][0]))
 
 
-def test(test_prog, exe, feed, fetch):
-    test_loader = utils.create_dataloader(paddle.dataset.mnist.test(), feed, True)
+def test(test_prog, exe, feed, fetch, loader):
     acc_manager = fluid.metrics.Accuracy()
-    for idx, sample in enumerate(test_loader()):
+    for idx, sample in enumerate(loader()):
         ret = exe.run(test_prog, feed=sample, fetch_list=fetch)
         acc_manager.update(value=ret[0], weight=utils.sample_batch(sample))
         if idx % 100 == 0:
             print('[TEST] step=%d accum_acc1=%.2f' % (idx, acc_manager.eval()))
     print('[TEST] local_acc1: %.2f' % acc_manager.eval())
-
     return acc_manager.value, acc_manager.weight
 
 
 if __name__ == '__main__':
-    init_dist_env()
-    exe = create_executor()
+    if args.distributed:
+        init_dist_env()
+
+    place = create_place(args.distributed)
+    exe = create_executor(place)
 
     train_prog, start_prog = fluid.Program(), fluid.Program()
     with fluid.program_guard(train_prog, start_prog):
         feed, fetch = model.build_train_net()
-        distributed_optimize(fetch[0])    
-    train(train_prog, start_prog, exe, feed, fetch)
+
+    optimizer = create_optimizer(args.distributed)
+    optimizer.minimize(fetch[0], start_prog)
+
+    loader = create_train_dataloader(feed, place, args.distributed)
+    if args.distributed:
+        train_prog = fleet.main_program
+    train(train_prog, start_prog, exe, feed, fetch, loader)
 
     test_prog = fluid.Program()
     with fluid.program_guard(test_prog):
         feed, fetch = model.build_test_net()
-    local_acc, local_weight = test(test_prog, exe, feed, fetch)
 
-    dist_acc = utils.dist_eval_acc(exe, local_acc, local_weight)
-    print('[TEST] global_acc1: %.2f' % dist_acc)
+    loader = create_test_dataloader(feed, place, args.distributed)
+    local_acc, local_weight = test(test_prog, exe, feed, fetch, loader)
+
+    if args.distributed:
+        dist_acc = utils.dist_eval_acc(exe, local_acc, local_weight)
+        print('[TEST] global_acc1: %.2f' % dist_acc)
+
