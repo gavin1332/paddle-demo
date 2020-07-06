@@ -80,14 +80,20 @@ def create_optimizer(is_distributed):
 
 
 def create_train_dataloader(feed, place, is_distributed):
-    generator = paddle.dataset.mnist.train()
-    return utils.create_dataloader(generator, feed, place,
+    train_data_path = 'dataset/train-images-idx3-ubyte.gz'
+    train_label_path = 'dataset/train-labels-idx1-ubyte.gz'
+    reader = paddle.dataset.mnist.reader_creator(train_data_path,
+            train_label_path, 100)
+    return utils.create_dataloader(reader, feed, place,
             is_test=False, is_distributed=is_distributed)
 
 
 def create_test_dataloader(feed, place, is_distributed):
-    generator = paddle.dataset.mnist.test()
-    return utils.create_dataloader(generator, feed, place,
+    test_data_path = 'dataset/t10k-images-idx3-ubyte.gz'
+    test_label_path = 'dataset/t10k-labels-idx1-ubyte.gz'
+    reader = paddle.dataset.mnist.reader_creator(test_data_path,
+            test_label_path, 100)
+    return utils.create_dataloader(reader, feed, place,
             is_test=True, is_distributed=is_distributed)
 
 

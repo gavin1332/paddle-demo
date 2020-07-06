@@ -8,12 +8,12 @@ def create_dataloader(generator, feed, place, is_test, is_distributed):
     # Split dataset into nranks parts, and each rank runs it's own part.
     #
     # There are three main dataset formats:
-    #   1. One sample in one file, and the dataset consists of a file list
-    #   2. Multiple samples in one file, and the dataset consists of a file list
-    #   3. Multiple samples in one file, and it is the whole dataset
+    #   1. [RECOMMENDED] One sample in one file, and the dataset consists of a file list
+    #   2. multiple samples in one file, and the dataset consists of a file list
+    #   3. multiple samples in one file, and it is the whole dataset
     # 
     # And the corresponding solutions are:
-    #   1. Split a file list into nranks parts uniformly, RECOMMENDED
+    #   1. Split a file list into nranks parts uniformly 
     #   2. Split a file list into nranks parts and guarantee that each part consists of
     #      the same amount of samples, otherwise, it may cause hanging while training
     #   3. Parse the dataset first and then split them into nranks parts. The example
