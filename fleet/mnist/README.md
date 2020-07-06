@@ -28,7 +28,38 @@ sh dist_run.sh
 
 ## 多机多卡
 
-待补充
+假设有两台主机，ip地址分别为192.168.0.2和192.168.0.3，分别在两台主机上执行下述命令即可：
+
+在ip地址为192.168.0.2的主机上：
+
+``` code::bash
+current_node_ip=192.168.0.2
+cluster_node_ips=192.168.0.2,192.168.0.3
+
+CUDA_VISIBLE_DEVICES=0,1 \
+python -m paddle.distributed.launch \
+    --selected_gpus=0,1 \
+    --log_dir=mylog \
+    --cluster_node_ips=$cluster_node_ips \
+    --node_ip=$current_node_ip \
+    train.py --distributed
+```
+
+在ip地址为192.168.0.3的主机上：
+
+``` code::bash
+# on node 192.168.0.3
+current_node_ip=192.168.0.3
+cluster_node_ips=192.168.0.2,192.168.0.3
+
+CUDA_VISIBLE_DEVICES=0,1 \
+python -m paddle.distributed.launch \
+    --selected_gpus=0,1 \
+    --log_dir=mylog \
+    --cluster_node_ips=$cluster_node_ips \
+    --node_ip=$current_node_ip \
+    train.py --distributed
+```
 
 ## 基于PaddleCloud执行多机多卡
 
