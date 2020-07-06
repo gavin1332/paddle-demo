@@ -1,4 +1,6 @@
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+
+# suggested configuration
 export FLAGS_fuse_parameter_memory_size=16
 export FLAGS_fuse_parameter_groups_size=50
 export FLAGS_conv_workspace_size_limit=4000

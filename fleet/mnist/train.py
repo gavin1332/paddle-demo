@@ -15,7 +15,37 @@ import utils
 parser = argparse.ArgumentParser()
 parser.add_argument('--distributed', action='store_true', default=False)
 args = parser.parse_args()
-print(args)
+
+
+def main():
+    if args.distributed:
+        init_dist_env()
+
+    place = create_place(args.distributed)
+    exe = create_executor(place)
+
+    train_prog, start_prog = fluid.Program(), fluid.Program()
+    with fluid.program_guard(train_prog, start_prog):
+        feed, fetch = model.build_train_net()
+
+    optimizer = create_optimizer(args.distributed)
+    optimizer.minimize(fetch[0], start_prog)
+
+    loader = create_train_dataloader(feed, place, args.distributed)
+    if args.distributed:
+        train_prog = fleet.main_program
+    train(train_prog, start_prog, exe, feed, fetch, loader)
+
+    test_prog = fluid.Program()
+    with fluid.program_guard(test_prog):
+        feed, fetch = model.build_test_net()
+
+    loader = create_test_dataloader(feed, place, args.distributed)
+    local_acc, local_weight = test(test_prog, exe, feed, fetch, loader)
+
+    if args.distributed:
+        dist_acc = utils.dist_eval_acc(exe, local_acc, local_weight)
+        print('[TEST] global_acc1: %.2f' % dist_acc)
 
 
 def init_dist_env():
@@ -81,32 +111,5 @@ def test(test_prog, exe, feed, fetch, loader):
 
 
 if __name__ == '__main__':
-    if args.distributed:
-        init_dist_env()
-
-    place = create_place(args.distributed)
-    exe = create_executor(place)
-
-    train_prog, start_prog = fluid.Program(), fluid.Program()
-    with fluid.program_guard(train_prog, start_prog):
-        feed, fetch = model.build_train_net()
-
-    optimizer = create_optimizer(args.distributed)
-    optimizer.minimize(fetch[0], start_prog)
-
-    loader = create_train_dataloader(feed, place, args.distributed)
-    if args.distributed:
-        train_prog = fleet.main_program
-    train(train_prog, start_prog, exe, feed, fetch, loader)
-
-    test_prog = fluid.Program()
-    with fluid.program_guard(test_prog):
-        feed, fetch = model.build_test_net()
-
-    loader = create_test_dataloader(feed, place, args.distributed)
-    local_acc, local_weight = test(test_prog, exe, feed, fetch, loader)
-
-    if args.distributed:
-        dist_acc = utils.dist_eval_acc(exe, local_acc, local_weight)
-        print('[TEST] global_acc1: %.2f' % dist_acc)
+    main()
 
