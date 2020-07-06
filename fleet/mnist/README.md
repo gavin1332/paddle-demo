@@ -1,7 +1,7 @@
 # 简介
 本示例基于MNIST数据集，展现如何使用Fleet API实现Paddle分布式训练。
 
-我们在文件`train.py`中通过`args.distributed`配置项显式呈现了单机单卡代码如何使用Fleet API合入分布式训练能力。并且，为了更加清晰地展现单卡训练和分布式训练在配置上的关键区别，我们将`args.distributed`配置项限制仅在主函数`main`里使用，以便于读者快速借鉴。
+我们在文件`train.py`中通过`args.distributed`配置项显式呈现了单机单卡代码如何使用Fleet API合入分布式训练能力。并且，为了更加清晰地展现单卡训练和分布式训练在配置上的关键区别，避免分布式的配置分散不易阅读，我们将`args.distributed`配置项限制仅在主函数`main`里使用，以便于读者快速借鉴。
 
 即在`main`函数中，与分布式训练相关的代码要么在`if args.distributed`条件下执行，要么代入`args.distributed`参数。而其他可以在单卡训练和分布式训练中共享的代码均与此参数无关。
 
