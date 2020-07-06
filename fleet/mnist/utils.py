@@ -9,8 +9,8 @@ def create_dataloader(generator, feed, place, is_test, is_distributed):
     #
     # There are three main dataset formats:
     #   1. One sample in one file, and the dataset consists of a file list
-    #   2. multiple samples in one file, and the dataset consists of a file list
-    #   3. multiple samples in one file, and it is the whole dataset
+    #   2. Multiple samples in one file, and the dataset consists of a file list
+    #   3. Multiple samples in one file, and it is the whole dataset
     # 
     # And the corresponding solutions are:
     #   1. Split a file list into nranks parts uniformly, RECOMMENDED
