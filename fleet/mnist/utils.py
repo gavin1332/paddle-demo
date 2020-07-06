@@ -20,18 +20,16 @@ def create_dataloader(generator, feed, place, is_test, is_distributed):
     #      below is in this condition, and the redundant parsing is unavoidable 
     #
     # Currently, one way to avoid uneven segmentation is dropping tail samples less than
-    # nranks which could not utilize the whole dataset.
+    # nranks. Another way is training with the whole dataset in each rank with different
+    # shuffling. It could keep the amount of samples uniform among all ranks. But keep
+    # in mind that the number of samples in ONE pass is equivalent to that of NRANKS
+    # passes. What is more, if the total number of training passes is kown as N, we
+    # could even replicate the dataset for N times in each rank, and do shuffling and
+    # training to utilize the dataset much more efficiently. The small expense of this
+    # is losing the explicit boundary information for each pass of training.
     #
-    # Another way is training with the whole dataset in each rank with different shuffling.
-    # It could keep the amount of samples uniform among all ranks. But keep in mind that
-    # the number of samples in ONE pass is equivalent to that of NRANKS passes. What is
-    # more, if the total number of training passes is kown as N, we could even replicate
-    # the dataset for N times in each rank, and do shuffling and training to utilize the
-    # dataset much more efficiently. The small expense of this is losing the explicit
-    # boundary information for each pass of training.
-    #
-    # We could distinguish these two strategies as sampling with replacement and sampleing
-    # without replacement.
+    # We could distinguish these two strategies as sampling without replacement and
+    # sampleing with replacement.
     def _dist_wrapper(generator):
         def _wrapper():
             rank = fleet.worker_index()
