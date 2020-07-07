@@ -82,8 +82,11 @@ def create_optimizer(is_distributed):
 def create_train_dataloader(feed, place, is_distributed):
     train_data_path = 'dataset/train-images-idx3-ubyte.gz'
     train_label_path = 'dataset/train-labels-idx1-ubyte.gz'
-    reader = paddle.dataset.mnist.reader_creator(train_data_path,
-            train_label_path, 100)
+    if os.path.exists(train_data_path) and os.path.exists(train_label_path):
+        reader = paddle.dataset.mnist.reader_creator(train_data_path,
+                train_label_path, 100)
+    else:
+        reader = paddle.dataset.mnist.train()
     return utils.create_dataloader(reader, feed, place,
             is_test=False, is_distributed=is_distributed)
 
@@ -91,8 +94,11 @@ def create_train_dataloader(feed, place, is_distributed):
 def create_test_dataloader(feed, place, is_distributed):
     test_data_path = 'dataset/t10k-images-idx3-ubyte.gz'
     test_label_path = 'dataset/t10k-labels-idx1-ubyte.gz'
-    reader = paddle.dataset.mnist.reader_creator(test_data_path,
-            test_label_path, 100)
+    if os.path.exists(test_data_path) and os.path.exists(test_label_path):
+        reader = paddle.dataset.mnist.reader_creator(test_data_path,
+                test_label_path, 100)
+    else:
+        reader = paddle.dataset.mnist.test()
     return utils.create_dataloader(reader, feed, place,
             is_test=True, is_distributed=is_distributed)
 
