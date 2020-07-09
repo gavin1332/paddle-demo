@@ -14,6 +14,8 @@ import utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--distributed', action='store_true', default=False)
+parser.add_argument('--batch_size', default=16)
+parser.add_argument('--epoch_num', default=4)
 args = parser.parse_args()
 
 
@@ -82,33 +84,28 @@ def create_optimizer(is_distributed):
 def create_train_dataloader(feed, place, is_distributed):
     train_data_path = 'dataset/train-images-idx3-ubyte.gz'
     train_label_path = 'dataset/train-labels-idx1-ubyte.gz'
-    if os.path.exists(train_data_path) and os.path.exists(train_label_path):
-        reader = paddle.dataset.mnist.reader_creator(train_data_path,
-                train_label_path, 100)
-    else:
-        reader = paddle.dataset.mnist.train()
+    reader = paddle.dataset.mnist.reader_creator(train_data_path,
+            train_label_path, 100)
     return utils.create_dataloader(reader, feed, place,
-            is_test=False, is_distributed=is_distributed)
+            batch_size=args.batch_size, is_test=False, is_distributed=is_distributed)
 
 
 def create_test_dataloader(feed, place, is_distributed):
     test_data_path = 'dataset/t10k-images-idx3-ubyte.gz'
     test_label_path = 'dataset/t10k-labels-idx1-ubyte.gz'
-    if os.path.exists(test_data_path) and os.path.exists(test_label_path):
-        reader = paddle.dataset.mnist.reader_creator(test_data_path,
-                test_label_path, 100)
-    else:
-        reader = paddle.dataset.mnist.test()
+    reader = paddle.dataset.mnist.reader_creator(test_data_path,
+            test_label_path, 100)
     return utils.create_dataloader(reader, feed, place,
-            is_test=True, is_distributed=is_distributed)
+            batch_size=args.batch_size, is_test=True, is_distributed=is_distributed)
 
 
 def train(train_prog, start_prog, exe, feed, fetch, loader):
     exe.run(start_prog)
-    for idx, sample in enumerate(loader()):
-        ret = exe.run(train_prog, feed=sample, fetch_list=fetch)
-        if idx % 100 == 0:
-            print('[TRAIN] step=%d loss=%f' % (idx, ret[0][0]))
+    for epoch in range(args.epoch_num):
+        for idx, sample in enumerate(loader()):
+            ret = exe.run(train_prog, feed=sample, fetch_list=fetch)
+            if idx % 100 == 0:
+                print('[TRAIN] epoch=%d step=%d loss=%f' % (epoch, idx, ret[0][0]))
 
 
 def test(test_prog, exe, feed, fetch, loader):

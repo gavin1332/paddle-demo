@@ -1,12 +1,8 @@
-import six
-
 import paddle.fluid as fluid
 from paddle.fluid.incubate.fleet.collective import fleet
 
 
-BATCH_SIZE = 16
-
-def create_dataloader(generator, feed, place, is_test, is_distributed):
+def create_dataloader(generator, feed, place, batch_size, is_test, is_distributed):
     # Split dataset into nranks parts, and each rank runs it's own part.
     #
     # There are three main dataset formats:
@@ -46,7 +42,7 @@ def create_dataloader(generator, feed, place, is_test, is_distributed):
 
     drop_last = False if is_test else True
     loader = fluid.io.DataLoader.from_generator(feed_list=feed, capacity=16)
-    loader.set_sample_generator(generator, batch_size=BATCH_SIZE,
+    loader.set_sample_generator(generator, batch_size=batch_size,
             drop_last=drop_last, places=[place])
     return loader
 
@@ -63,7 +59,7 @@ def dist_eval_acc(exe, local_acc, local_weight):
 
 
 def sample_batch(sample):
-    tensor = list(six.itervalues(sample[0]))[0]
+    tensor = list(sample[0].values())[0]
     assert(isinstance(tensor, fluid.LoDTensor))
-    return int(tensor.shape()[0])
+    return tensor.shape()[0]
 
