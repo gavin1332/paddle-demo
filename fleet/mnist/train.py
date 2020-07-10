@@ -15,7 +15,8 @@ import utils
 parser = argparse.ArgumentParser()
 parser.add_argument('--distributed', action='store_true', default=False)
 parser.add_argument('--batch_size', type=int, default=16)
-parser.add_argument('--epoch_num', type=int, default=4)
+parser.add_argument('--epoch_num', type=int, default=2)
+parser.add_argument('--learning_rate', type=float, default=2e-3)
 args = parser.parse_args()
 
 
@@ -75,7 +76,7 @@ def create_executor(place):
 
 
 def create_optimizer(is_distributed):
-    optimizer = fluid.optimizer.SGD(learning_rate=1e-3)
+    optimizer = fluid.optimizer.SGD(learning_rate=args.learning_rate)
     if is_distributed:
         optimizer = distributed_optimize(optimizer)    
     return optimizer

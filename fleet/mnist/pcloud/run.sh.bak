@@ -4,8 +4,8 @@
 ##                                                           ##
 ###############################################################
 # 请更新成所在组下的个人 access key/secret key
-AK=""
-SK=""
+AK="83543bd02884567f88a779f124e6fd20"
+SK="f56ab9b874f65bf9a3340cf5e6d2a4ae"
 # 作业参数
 gpus_per_node="8"
 k8s_gpu_type="baidu/gpu_v100"
@@ -37,7 +37,9 @@ upload_files="before_hook.sh end_hook.sh ../*.py"
 start_cmd="python -m paddle.distributed.launch \
                   --selected_gpus=0,1 \
                   --log_dir=mylog \
-                  train.py --distributed"
+                  train.py --distributed \
+                      --batch_size=16 \
+                      --epoch_num=4"
 
 paddlecloud job train \
     --job-name ${job_name} \
