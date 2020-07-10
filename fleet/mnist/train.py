@@ -14,8 +14,8 @@ import utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--distributed', action='store_true', default=False)
-parser.add_argument('--batch_size', default=16)
-parser.add_argument('--epoch_num', default=4)
+parser.add_argument('--batch_size', type=int, default=16)
+parser.add_argument('--epoch_num', type=int, default=4)
 args = parser.parse_args()
 
 

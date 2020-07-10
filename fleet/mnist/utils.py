@@ -61,5 +61,5 @@ def dist_eval_acc(exe, local_acc, local_weight):
 def sample_batch(sample):
     tensor = list(sample[0].values())[0]
     assert(isinstance(tensor, fluid.LoDTensor))
-    return tensor.shape()[0]
+    return float(tensor.shape()[0])
 
