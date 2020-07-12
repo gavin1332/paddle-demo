@@ -1,3 +1,5 @@
+NOTICE: This repository is moved to https://github.com/PaddlePaddle/Fleet/tree/develop/examples/dist_test, and it will not be updated in the future.
+
 # 简介
 本示例基于MNIST数据集，展现如何使用Fleet API实现Paddle分布式训练。
 
