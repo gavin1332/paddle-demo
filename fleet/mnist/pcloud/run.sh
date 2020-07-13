@@ -35,6 +35,7 @@ upload_files="before_hook.sh end_hook.sh ../*.py"
 
 # 启动命令
 start_cmd="python -m paddle.distributed.launch \
+                  --use_paddlecloud \
                   --selected_gpus=0,1 \
                   --log_dir=mylog \
                   train.py --distributed"
