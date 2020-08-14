@@ -10,6 +10,7 @@ if 'program_to_code' in dir(fluid.transpiler.details.program_utils):
 
 OP_ROLE_VAR_KEY = core.op_proto_and_checker_maker.kOpRoleVarAttrName()
 
+
 def print_program(program, name='program'):
   with open(name, 'w') as fout:
     if 'program_to_code' in globals():
@@ -47,7 +48,7 @@ def update_main_program(program, grad_dict, grad_out_dict, runtime_shape):
   for name in grad_out_dict:
     grad_out = grad_out_dict[name]
     block.create_var(name=grad_out.name, dtype='float32', shape=grad_out.shape, persistable=True)
-  main_program.global_block().create_var(name=grad_fused.name, dtype='float32', shape=runtime_shape, persistable=True)
+  block.create_var(name=grad_fused.name, dtype='float32', shape=runtime_shape, persistable=True)
   for name in grad_dict:
     block._remove_var(name)
   
@@ -74,11 +75,6 @@ def update_main_program(program, grad_dict, grad_out_dict, runtime_shape):
         op._update_desc_attr(OP_ROLE_VAR_KEY, op_role_var)
 
 
-sgd_optimizer = fluid.optimizer.SGD(learning_rate=0.001)
-place = fluid.CPUPlace()
-exe = fluid.Executor(place)
-feed_data = np.random.uniform(0, 1, size=(1, 10)).astype('float32')
-
 start_program = fluid.Program()
 main_program = fluid.Program()
 with fluid.program_guard(main_program, start_program):
@@ -86,6 +82,7 @@ with fluid.program_guard(main_program, start_program):
   fc = layers.fc(data, size=10)
   loss = layers.reduce_sum(fc)
 
+  sgd_optimizer = fluid.optimizer.SGD(learning_rate=0.001)
   opt_out = sgd_optimizer.minimize(loss)
 
 print_program(main_program, 'program.before')
@@ -96,13 +93,22 @@ coalesce_program, grad_out_dict, grad_fused, fused_shape_var = create_coalesce_p
 print_program(coalesce_program, 'program.coalesce')
   
 scope = fluid.Scope()
+place = fluid.CPUPlace()
+exe = fluid.Executor(place)
+
+# initialize parameters
 exe.run(start_program, scope=scope)
+
+# pre-allocate coalesce buffer in scope and get the runtime buffer size
 shape_array = exe.run(coalesce_program, fetch_list=[fused_shape_var.name], scope=scope)
 runtime_shape = shape_array[0]
 
+# rewrite the main program by replacing all original gradients to sliced variables
+# from gradient-fused buffer, and update the buffer size by runtime shape
 update_main_program(main_program, grad_dict, grad_out_dict, runtime_shape)
 print_program(main_program, 'program.after')
 
+feed_data = np.random.uniform(0, 1, size=(1, 10)).astype('float32')
 grad_fused_val = exe.run(main_program, feed={'data': feed_data}, fetch_list=[grad_fused.name], scope=scope)
 import sys
 np.set_printoptions(threshold=sys.maxsize)
