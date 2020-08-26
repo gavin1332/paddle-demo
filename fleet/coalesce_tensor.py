@@ -100,6 +100,7 @@ exe = fluid.Executor(place)
 exe.run(start_program, scope=scope)
 
 # pre-allocate coalesce buffer in scope and get the runtime buffer size
+# coalesce_program could be merged with startup program
 shape_array = exe.run(coalesce_program, fetch_list=[fused_shape_var.name], scope=scope)
 runtime_shape = shape_array[0]
 
