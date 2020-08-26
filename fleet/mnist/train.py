@@ -94,10 +94,11 @@ def distributed_optimize(optimizer):
     A part of configuration for distributed training
     '''
     strategy = DistributedStrategy()
-    strategy.fuse_all_reduce_ops = True
-    strategy.nccl_comm_num = 2 
-    strategy.fuse_elewise_add_act_ops=True
-    strategy.fuse_bn_act_ops = True
+    #strategy.fuse_all_reduce_ops = True
+    #strategy.nccl_comm_num = 2 
+    #strategy.fuse_elewise_add_act_ops=True
+    #strategy.fuse_bn_act_ops = True
+    stategy.data_parallel = True
     return fleet.distributed_optimizer(optimizer, strategy=strategy)
 
 
