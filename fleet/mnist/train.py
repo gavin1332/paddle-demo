@@ -24,6 +24,8 @@ parser.add_argument('--learning_rate', type=float, default=2e-3,
     help='learning rate')
 args = parser.parse_args()
 
+paddle.enable_static()
+
 
 def main():
     '''
